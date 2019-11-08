@@ -1,0 +1,19 @@
+{
+  "name": "george/tz-calc",
+  "description": "Калькулятор задолженности для займа.",
+  "authors": [
+    {
+      "name": "Sergushin George",
+      "email": "george@sergushin.ru"
+    }
+  ],
+  "require": {
+    "php": ">=7.0",
+    "slim/slim": "^3.12"
+  },
+  "autoload": {
+    "psr-4": {
+      "LoanCalc\\": "src/"
+    }
+  }
+}

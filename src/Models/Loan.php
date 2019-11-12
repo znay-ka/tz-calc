@@ -4,7 +4,7 @@
 namespace LoanCalc\Models;
 
 
-class Loan
+class Loan extends AbstractModel
 {
     /** @var float */
     public $base;

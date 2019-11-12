@@ -5,42 +5,47 @@ namespace LoanCalc\Controllers;
 
 
 use LoanCalc\Mappers\LoanMapper;
-use LoanCalc\Mappers\PaymentMapper;
-use LoanCalc\Models\Loan;
-use LoanCalc\Models\Payment;
+use LoanCalc\Mappers\PaymentSetMapper;
+use LoanCalc\Services\CalcService;
 
 class CalcController
 {
-    /** @var Loan */
-    private $loan;
-    /** @var array[Payment] */
-    private $payments = [];
+    private $calcService;
 
-    public function loadLoan($loanData) {
-        $mapper = new LoanMapper();
-        $this->loan = $mapper->fillFromArray($loanData);
+    public function __construct()
+    {
+        $this->calcService = new CalcService();
     }
 
-    public function loadPayments($paymentsData) {
-        $mapper = new PaymentMapper();
-        $this->payments[] = [];
-        foreach ($paymentsData as $payment) {
-            $this->payments[] = $mapper->fillFromArray($payment);
+    public function action($incomingArray)
+    {
+        // здесь я бы проверил данные на пустоту
+
+        try {
+            $loan = (new LoanMapper())->fillFromArray($incomingArray['loan']);
+            $paymentSet = (new PaymentSetMapper())->fillFromArray($incomingArray['payments']);
+            $atDate = new \DateTime($incomingArray['atDate']);
         }
-    }
-
-    public function calculate($atDateStr) {
-        $atDate = new \DateTime( $atDateStr );
-        $debt = $this->loan->base;
-        $perc = 0;
-        $day = new \DateInterval('P1D');
-        $dateCursor = (new \DateTime($this->loan->date->format('Y-m-d')))->add($day);
-        $lastDay = $atDate;
-
-        while ($lastDay >= $dateCursor) {
-            echo $dateCursor->format('Y-m-d').PHP_EOL;
-            $dateCursor->add($day);
+        catch (\Exception $e) {
+            return ["error" => $e->getMessage()];
         }
 
+        // здесь бы я проверил бы данные на заполнение (например что $loan->date не меньше atDate, если надо)
+
+        $value = $this->calcService->calculate($loan, $paymentSet, $atDate);
+        $response = ["summ" => $value];
+
+        // добавил подробную выписку посуточно, для проверки
+        if (in_array('detail', $incomingArray) && $incomingArray['atDate'] == true) {
+            $response['detail'] = $this->calcService->getDetailInfo();
+        }
+
+        return $response;
     }
+
+    public function generateError($desc)
+    {
+        return ["error" => $desc];
+    }
+
 }
